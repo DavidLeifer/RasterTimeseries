@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>WMS Time</title>
+    <link rel="stylesheet" href="https://openlayers.org/en/v4.6.5/css/ol.css" type="text/css">
+    <script src="https://openlayers.org/en/v4.6.5/build/ol.js"></script>
+
+    <style>
+
+    /* Setting up the slider styling */
+    .slidecontainer {
+        width: 120px;
+        margin-bottom: -20px;
+        margin-left: 10px;
+        z-index: 100px;
+        position: relative;
+    }
+
+    .slider {
+        -webkit-appearance: none;
+        width: 100%;
+        height: 15px;
+        border-radius: 5px;
+        background: #d3d3d3;
+        outline: none;
+        opacity: 0.7;
+        -webkit-transition: .2s;
+        transition: opacity .2s;
+    }
+
+    .slider::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 25px;
+        height: 25px;
+        border-radius: 50%;
+        background: 	#00008B;
+        cursor: pointer;
+    }
+
+    .slider::-moz-range-thumb {
+        width: 25px;
+        height: 25px;
+        border-radius: 50%;
+        background: #4CAF50;
+        cursor: pointer;
+      }
+    #legend {
+        background: #4CAF50;
+        position: absolute;
+        left:10px; 
+        top:200px; 
+        z-index:10000; 
+        width:150px; 
+        height:450px; 
+      }
+    .map {
+        width: 100%;
+        height: 100%;
+        cursor: pointer;
+      }
+    body {
+        height: 98%;
+      }
+    html {
+        height: 98%;
+    }
+    .title {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        text-align: center;
+        height:30px;
+      }
+    #button {
+        position: absolute;
+        left:10px; 
+        top:130px;
+        z-index:10000; 
+      }
+    </style>
+  </head>
+<body>
+    <div id="title" class="title">
+      <h2>Oregon Gridded Precipitation</h2>
+    </div>
+    <!-- Create map container -->
+    <div id="map" class="map">
+
+    <!-- Create Button -->
+    <div id="button" class="button">
+      <button onclick="myFunction()" style="height:50px; width:150px">Legend</button>
+    </div>
+
+    <!-- Create legend container inside map container-->
+    <div id="legend">
+        <img src="http://35.239.133.210:8080/geoserver/cite/wms?REQUEST=GetLegendGraphic&VERSION=1.0.0&FORMAT=image/png&WIDTH=20&HEIGHT=20&LAYER=cite:timeseries_oregon&STYLE=oregon_style">
+    <!-- Create slider container inside legend container-->
+    <div class="slidecontainer">
+      <h3>Timeslider</h3>
+      <input type="range" min="0" max="2" value="0" class="slider" id="myRange">
+      <p>Date: <span id="date_value"></span></p>
+    </div>    
+    </div>
+    </div>
+    <div role="group" aria-label="Animation controls">
+
+    <script>
+
+      // Set up the layers
+      var layers = [
+        new ol.layer.Tile({
+            source: new ol.source.OSM()
+          }),
+        new ol.layer.Tile({
+          source: new ol.source.TileWMS({
+            url: 'http://35.239.133.210:8080/geoserver/cite/wms',
+            params: {'LAYERS': 'cite:timeseries_oregon'}
+          })
+        })
+      ];
+
+      var map = new ol.Map({
+        layers: layers,
+        target: 'map',
+        view: new ol.View({
+          // Defining the location in Lat Lon. In this case our image is from Brazil
+          center:  ol.proj.transform([-120.5542,43.8041], 'EPSG:4326', 'EPSG:3857'),
+          zoom: 6
+        })
+      });
+
+      function myFunction() {
+        var x = document.getElementById("legend");
+        if (x.style.display === "none") {
+          x.style.display = "block";
+        } else {
+          x.style.display = "none";
+        }
+      }
+
+      // Define the available dates
+      var dates = ['1981-01-01T00:00:00.000Z', '1991-01-01T00:00:00.000Z', '2001-01-01T00:00:00.000Z', '2011-01-01T00:00:00.000Z']
+
+      var sliderRange = document.getElementById("myRange");
+      sliderRange.max = dates.length-1;
+
+      var dateValue = document.getElementById("date_value");
+      dateValue.innerHTML = dates[sliderRange.value].slice(0,10);
+      layers[1].getSource().updateParams({'TIME': dates[sliderRange.value]});
+
+      // Update the current slider value (each time you drag the slider handle)
+      sliderRange.oninput = function() {
+      dateValue.innerHTML = dates[this.value].slice(0,10);
+      layers[1].getSource().updateParams({'TIME': dates[this.value]});
+      }
+    </script>
+  </body>
+</html>
